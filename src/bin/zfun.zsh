@@ -1,4 +1,14 @@
 #!/bin/zsh
+################################################################################
+
+# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+
+# THIS IS STILL VERY EXPERIMENTAL. NON BACKWARD INCOMPATIBLE API
+# CHANGES ARE STILL POSSIBLE. USE AT YOUR ON RISKS.
+
+# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+
+################################################################################
 
 . zabort.zsh;
 
