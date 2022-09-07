@@ -7,6 +7,7 @@ set -eu
 ################################################################################
 
 function setup_file() {
+    bats_require_minimum_version 1.5.0;
     export TEST_FILE=tests/test-runner.zsh;
     export TEST_RUNNER=tests/test-runner.zsh;
     export TEST_COMMAND=tests/test-command.zsh;
