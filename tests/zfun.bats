@@ -584,6 +584,60 @@ function check() {
     check 'fun f a b :{}; f ""';
 }
 
+@test "scalar assignments" {
+    main=var:=;
+
+    expected_output="v=foobar";
+    check 'fun f:s :{ r:set foobar; }; var v := f; show v';
+
+    expected_output="v='   foo   bar   '";
+    check 'fun f:s :{ r:set "   foo   bar   "; }; var v := f; show v';
+
+    expected_output="v='   '";
+    check 'fun f:s :{ r:set "   "; }; var v := f; show v';
+
+    expected_output="v=''";
+    check 'fun f:s :{ r:set ""; }; var v := f; show v';
+}
+
+@test "array assignments" {
+    main=var:=;
+
+    expected_output="v=(a b c d)";
+    check 'fun f:a :{ r:set a b c d; }; var v := f; show v';
+
+    expected_output="v=('   foo   bar   ')";
+    check 'fun f:a :{ r:set "   foo   bar   "; }; var v := f; show v';
+
+    expected_output="v=('' '   ' '' '' '   ' '')";
+    check 'fun f:a :{ r:set "" "   " "" "" "   " ""; }; var v := f; show v';
+
+    expected_output="v=('')";
+    check 'fun f:a :{ r:set ""; }; var v := f; show v';
+
+    expected_output="v=()";
+    check 'fun f:a :{ r:set; }; var v := f; show v';
+}
+
+@test "association assignments" {
+    main=var:=;
+
+    expected_output="v=([a]=x [b]=y)";
+    check 'fun f:A :{ r:set a x b y; }; var v := f; show v';
+
+    expected_output="v=(['   aaa    aaa   ']='   xxx   yyy   ')";
+    check 'fun f:A :{ r:set "   aaa    aaa   " "   xxx   yyy   "; }; var v := f; show v';
+
+    expected_output="v=(['']='   ' ['   ']='')";
+    check 'fun f:A :{ r:set "" "   " "   " ""; }; var v := f; show v';
+
+    expected_output="v=(['']='')";
+    check 'fun f:A :{ r:set "" ""; }; var v := f; show v';
+
+    expected_output="v=()";
+    check 'fun f:A :{ r:set; }; var v := f; show v';
+}
+
 @test "invalid assignments" {
     main=var:=;
 

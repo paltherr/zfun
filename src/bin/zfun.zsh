@@ -249,7 +249,6 @@ function r:add() {
 
 ################################################################################
 
-# TODO: write more tests
 function var:=() {
     local var_name=$1; shift 1;
     local fun_name=$1; shift 1;
