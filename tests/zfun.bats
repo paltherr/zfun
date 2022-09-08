@@ -583,3 +583,16 @@ function check() {
     expected_error='f: Expected 2 argument(s), got 1: "".';
     check 'fun f a b :{}; f ""';
 }
+
+@test "invalid assignments" {
+    main=var:=;
+
+    expected_error='Function "f" has no reply value. It can'"'"'t be used with "var".';
+    check 'f() {}; var v := f';
+    check 'fun f :{}; var v := f';
+
+    expected_error='Function "f" returned without setting a reply.';
+    check 'fun f:s :{}; var v := f';
+    check 'fun f:a :{}; var v := f';
+    check 'fun f:A :{}; var v := f';
+}

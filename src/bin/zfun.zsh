@@ -256,13 +256,15 @@ function var:=() {
     local fun_type=${_zfun_fun_type[$fun_name]:-void};
 
     [[ $fun_type != void ]] ||
-        abort "Only functions with reply values may be use in variable assignments.";
+        abort -1 "Function ${(qqq)fun_name} has no reply value. It can't be used with \"var\".";
 
     $fun_name "$@";
     local exit_status=$?
 
     # TODO: Should this be moved to an EXIT trap of the called function?
     local reply_name=_zfun_reply_$(($#funcstack + 1));
+    [[ ${(P)+reply_name} -eq 1 ]] ||
+        abort -1 "Function ${(qqq)fun_name} returned without setting a reply.";
     _zfun-write $var_name $fun_type set "${(kv)${(P)reply_name}[@]}";
     return $exit_status;
 }
