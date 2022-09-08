@@ -561,25 +561,25 @@ function check() {
     main=f;
 
     expected_error='f: Expected 0 argument(s), got 1: "x".';
-    check 'fun f :{}; f x'
+    check 'fun f :{}; f x';
     expected_error='f: Expected 0 argument(s), got 1: "".';
-    check 'fun f :{}; f ""'
+    check 'fun f :{}; f ""';
     expected_error='f: Expected 0 argument(s), got 2: "x" "y".';
-    check 'fun f :{}; f x y'
+    check 'fun f :{}; f x y';
     expected_error='f: Expected 0 argument(s), got 2: "" "".';
-    check 'fun f :{}; f "" ""'
+    check 'fun f :{}; f "" ""';
 
     expected_error='f: Expected 1 argument(s), got 0.';
-    check 'fun f a :{}; f'
+    check 'fun f a :{}; f';
     expected_error='f: Expected 1 argument(s), got 2: "x" "y".';
-    check 'fun f a :{}; f x y'
+    check 'fun f a :{}; f x y';
     expected_error='f: Expected 1 argument(s), got 2: "" "".';
-    check 'fun f a :{}; f "" ""'
+    check 'fun f a :{}; f "" ""';
 
     expected_error='f: Expected 2 argument(s), got 0.';
-    check 'fun f a b :{}; f'
+    check 'fun f a b :{}; f';
     expected_error='f: Expected 2 argument(s), got 1: "x".';
-    check 'fun f a b :{}; f x'
+    check 'fun f a b :{}; f x';
     expected_error='f: Expected 2 argument(s), got 1: "".';
-    check 'fun f a b :{}; f ""'
+    check 'fun f a b :{}; f ""';
 }
