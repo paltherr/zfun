@@ -249,8 +249,21 @@ function r:add() {
 
 ################################################################################
 
+function _zfun-var-usage() {
+    local error=(
+        "var: $1"
+        "Usage: var <variable-name> := <function-name> [<argument>…]"
+    );
+    abort -2 ${(F)error}
+}
+
 function var:=() {
+    local usage=_zfun-var-usage;
+
     local var_name=$1; shift 1;
+
+    [[ $# -ge 1 ]] || $usage "A function call is required.";
+
     local fun_name=$1; shift 1;
     local fun_type=${_zfun_fun_type[$fun_name]:-void};
 
@@ -273,13 +286,27 @@ function var:=() {
 # Name of the variable in the "var … := … " construct.
 typeset -g _zfun_var_name;
 
-# TODO: Add detection of misuage of the token := like in the function "fun".
+# Usage:
+# - var <variable-name> := <function-name> [<argument>…]
 # TODO: Add support for += to append values.
 function var() {
+    local usage=_zfun-var-usage;
+
+    [[ $# -ge 1 && $1 != := ]] || $usage "A variable name is required.";
+
+    local token_index=$@[(i)*:=*];
+    [[ $token_index -le $# ]] || $usage "The token := is required.";
+    [[ $@[token_index] != *?:= ]] || $usage "The token := must be preceded by a space.";
+    [[ $@[token_index] != :=?* ]] || $usage "The token := must be followed by a space.";
+    [[ $@[token_index] = := ]] || $usage "The token := must be preceded and followed by a space.";
+    [[ $token_index -eq 2 ]] || $usage "A single variable name is allowed, got $(_zfun-args-show "$@[1,token_index-1]").";
+
+    [[ $# -eq 2 ]] || abort "Found too many arguments: ${(qqq)@}";
+
     typeset -g _zfun_var_name=$1;
 }
 
 # Space at the end to trigger alias resolution on first argument.
-galiases[:=]="; local \$_zfun_var_name=; unset \$_zfun_var_name; var:= \$_zfun_var_name ";
+galiases[:=]='":="; local $_zfun_var_name=; unset $_zfun_var_name; var:= $_zfun_var_name ';
 
 ################################################################################

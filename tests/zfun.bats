@@ -639,13 +639,79 @@ function check() {
 }
 
 @test "invalid assignments" {
-    main=var:=;
+    main=var;
+    expected_trace=(
+        "Usage: $main <variable-name> := <function-name> [<argument>…]"
+        "at $TRACE_top($main)"
+    );
 
-    expected_error='Function "f" has no reply value. It can'"'"'t be used with "var".';
+    expected_error="$main: A variable name is required.";
+    check 'var';
+    check 'var :=';
+    check 'var := f';
+    check 'var := f x';
+
+    expected_error="$main: The token := is required.";
+    check 'var v';
+    check 'var v w';
+    check 'var v w u';
+
+    expected_error="$main: The token := must be preceded by a space.";
+    check 'var v:=';
+    check 'var v:= f';
+    check 'var v:= f x';
+    check 'var v w:=';
+    check 'var v w:= f';
+    check 'var v w:= f x';
+    check 'var v w u:=';
+    check 'var v w u:= f';
+    check 'var v w u:= f x';
+
+    expected_error="$main: The token := must be followed by a space.";
+    check 'var :=f';
+    check 'var :=f x';
+    check 'var v :=f';
+    check 'var v :=f x';
+    check 'var v w :=f';
+    check 'var v w :=f x';
+    check 'var v w u :=f';
+    check 'var v w u :=f x';
+
+    expected_error="$main: The token := must be preceded and followed by a space.";
+    check 'var v:=f';
+    check 'var v:=f x';
+    check 'var v w:=f';
+    check 'var v w:=f x';
+    check 'var v w u:=f';
+    check 'var v w u:=f x';
+
+    expected_error="$main: A single variable name is allowed, got 2: \"v\" \"w\".";
+    check 'var v w :=';
+    check 'var v w := f';
+    check 'var v w := f x';
+
+    expected_error="$main: A single variable name is allowed, got 3: \"v\" \"w\" \"u\".";
+    check 'var v w u :=';
+    check 'var v w u := f';
+    check 'var v w u := f x';
+
+    main=var:=;
+    main2=var;
+    expected_trace=(
+        "Usage: $main2 <variable-name> := <function-name> [<argument>…]"
+        "at $TRACE_top($main)"
+    );
+
+    expected_error="$main2: A function call is required.";
+    check 'var v :=';
+
+    expected_trace=();
+
+    expected_error="Function \"f\" has no reply value. It can't be used with \"var\".";
     check 'f() {}; var v := f';
     check 'fun f :{}; var v := f';
 
-    expected_error='Function "f" returned without setting a reply.';
+    expected_error="Function \"f\" returned without setting a reply.";
     check 'fun f:s :{}; var v := f';
     check 'fun f:a :{}; var v := f';
     check 'fun f:A :{}; var v := f';
