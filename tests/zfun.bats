@@ -695,21 +695,14 @@ function check() {
     check 'var v w u := f';
     check 'var v w u := f x';
 
-    main=var:=;
-    main2=var;
-    expected_trace=(
-        "Usage: $main2 <variable-name> := <function-name> [<argument>…]"
-        "at $TRACE_top($main)"
-    );
-
-    expected_error="$main2: A function call is required.";
+    expected_error="$main: A function call is required.";
     check 'var v :=';
 
-    expected_trace=();
-
-    expected_error="Function \"f\" has no reply value. It can't be used with \"var\".";
+    expected_error="$main: Function \"f\" has no reply value. It can't be used with \"var\".";
     check 'f() {}; var v := f';
     check 'fun f :{}; var v := f';
+
+    expected_trace=();
 
     expected_error="Function \"f\" returned without setting a reply.";
     check 'fun f:s :{}; var v := f';

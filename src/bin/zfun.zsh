@@ -249,29 +249,38 @@ function r:add() {
 
 ################################################################################
 
+# Name of the variable in the "var … := … " construct.
+typeset -g _zfun_var_name;
+
 function _zfun-var-usage() {
     local error=(
-        "var: $1"
+        "$1"
         "Usage: var <variable-name> := <function-name> [<argument>…]"
     );
-    abort -2 ${(F)error}
+    usage -1 ${(F)error}
 }
 
-function var:=() {
+# Usage:
+# - var <variable-name> := <function-name> [<argument>…]
+# TODO: Add support for += to append values.
+function var() {
     local usage=_zfun-var-usage;
 
-    local var_name=$1; shift 1;
+    if [[ ${1:-} = -zfun-var-callback- ]]; then
+        shift 1;
 
-    [[ $# -ge 1 ]] || $usage "A function call is required.";
+        local var_name=$1; shift 1;
 
-    local fun_name=$1; shift 1;
-    local fun_type=${_zfun_fun_type[$fun_name]:-void};
+        [[ $# -ge 1 ]] || $usage "A function call is required.";
 
-    [[ $fun_type != void ]] ||
-        abort -1 "Function ${(qqq)fun_name} has no reply value. It can't be used with \"var\".";
+        local fun_name=$1; shift 1;
+        local fun_type=${_zfun_fun_type[$fun_name]:-void};
 
-    $fun_name "$@";
-    local exit_status=$?
+        [[ $fun_type != void ]] ||
+            $usage "Function ${(qqq)fun_name} has no reply value. It can't be used with \"var\".";
+
+        $fun_name "$@";
+        local exit_status=$?
 
     # TODO: Should this be moved to an EXIT trap of the called function?
     local reply_name=_zfun_reply_$(($#funcstack + 1));
@@ -279,18 +288,7 @@ function var:=() {
         abort -1 "Function ${(qqq)fun_name} returned without setting a reply.";
     _zfun-write $var_name $fun_type set "${(kv)${(P)reply_name}[@]}";
     return $exit_status;
-}
-
-################################################################################
-
-# Name of the variable in the "var … := … " construct.
-typeset -g _zfun_var_name;
-
-# Usage:
-# - var <variable-name> := <function-name> [<argument>…]
-# TODO: Add support for += to append values.
-function var() {
-    local usage=_zfun-var-usage;
+    fi;
 
     [[ $# -ge 1 && $1 != := ]] || $usage "A variable name is required.";
 
@@ -299,7 +297,8 @@ function var() {
     [[ $@[token_index] != *?:= ]] || $usage "The token := must be preceded by a space.";
     [[ $@[token_index] != :=?* ]] || $usage "The token := must be followed by a space.";
     [[ $@[token_index] = := ]] || $usage "The token := must be preceded and followed by a space.";
-    [[ $token_index -eq 2 ]] || $usage "A single variable name is allowed, got $(_zfun-args-show "$@[1,token_index-1]").";
+    [[ $token_index -eq 2 ]] ||
+        $usage "A single variable name is allowed, got $(_zfun-args-show "$@[1,token_index-1]").";
 
     [[ $# -eq 2 ]] || abort "Found too many arguments: ${(qqq)@}";
 
@@ -307,6 +306,6 @@ function var() {
 }
 
 # Space at the end to trigger alias resolution on first argument.
-galiases[:=]='":="; local $_zfun_var_name=; unset $_zfun_var_name; var:= $_zfun_var_name ';
+galiases[:=]='":="; local $_zfun_var_name=; unset $_zfun_var_name; var -zfun-var-callback- $_zfun_var_name ';
 
 ################################################################################
