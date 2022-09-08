@@ -250,7 +250,7 @@ function r:add() {
 ################################################################################
 
 # TODO: write more tests
-function _zfun-call() {
+function var:=() {
     local var_name=$1; shift 1;
     local fun_name=$1; shift 1;
     local fun_type=${_zfun_fun_type[$fun_name]:-void};
@@ -279,6 +279,6 @@ function var() {
 }
 
 # Space at the end to trigger alias resolution on first argument.
-galiases[:=]="; local \$_zfun_var_name=; unset \$_zfun_var_name; _zfun-call \$_zfun_var_name ";
+galiases[:=]="; local \$_zfun_var_name=; unset \$_zfun_var_name; var:= \$_zfun_var_name ";
 
 ################################################################################
