@@ -52,10 +52,10 @@ function expected_stderr() {
 }
 
 function check() {
-    local command=( "$@" );
-    echo "# Testing: $TEST_RUNNER ${command[@]@Q}";
+    local command="${prelude:-}$1";
+    echo "# Testing: $TEST_RUNNER ${command@Q}";
 
-    run --separate-stderr $TEST_RUNNER "${command[@]}";
+    run --separate-stderr $TEST_RUNNER "$command";
     if ((${expected_status:-0})); then
         assert_failure ${expected_status};
     elif [ -n "${expected_error:-}" ]; then
