@@ -357,54 +357,45 @@ function check() {
 
 
 @test "invalid replies" {
-    main=r:set;
+    for main in r:set r:add; do
+        echo "";
+        echo "# Testing with ( main='$main' ):";
 
-    expected_error="$main: Replies can only be set from within functions that have a reply value.";
-    check 'r:set;';
-    check 'r:set foo;';
-    check 'r:set foo bar;';
+        local expected_trace=("at $TRACE_top($main)");
 
-    local expected_trace=(
-        "at $TRACE_top($main)"
-        "at $TRACE_top(f)"
-    );
-    check 'function f { r:set; }; f';
-    check 'function f { r:set foo; }; f';
-    check 'function f { r:set foo bar; }; f';
-    check 'fun f :{ r:set; }; f';
-    # check 'fun f:s :{ function g { r:set foobar; }; g; }; f';
+        expected_error="$main: Replies can only be set from within functions that have a reply value.";
+        check "$main;";
+        check "$main foo;";
+        check "$main foo bar;";
+        expected_trace[1]="at $TRACE_top(f)";
+        check "f() { $main; }; f";
+        check "f() { $main foo; }; f";
+        check "f() { $main foo bar; }; f";
+        check "fun f :{ $main; }; f";
+        check "fun f :{ $main foo; }; f";
+        check "fun f :{ $main foo bar; }; f";
+        expected_trace[2]="at $TRACE_top(g)";
+        check "fun g:s :{ f() { $main; }; f; }; g";
+        check "fun g:s :{ f() { $main foo; }; f; }; g";
+        check "fun g:s :{ f() { $main foo bar; }; f; }; g";
+        unset expected_trace[2];
 
-    # TODO: Test calling r:set from sourced file.
+        # TODO: Test calling $main from a sourced file.
 
-    expected_error="$main: Replies can not be set from within subshells.";
-    check 'fun f:s :{ (r:set foobar); }; f';
-    check 'fun f:s :{ : $(r:set foobar); }; f';
+        expected_error="$main: Replies can not be set from within subshells.";
+        check "fun f:s :{ ($main foobar); }; f";
+        check "fun f:s :{ : \$($main foobar); }; f";
 
-    expected_error="$main: Scalar replies require exactly one value, got 0.";
-    check 'fun f:s :{ r:set; }; f';
-    expected_error="$main: Scalar replies require exactly one value, got 2: \"foo\" \"bar\".";
-    check 'fun f:s :{ r:set foo bar; }; f';
+        expected_error="$main: Scalar replies require exactly one value, got 0.";
+        check "fun f:s :{ $main; }; f";
+        expected_error="$main: Scalar replies require exactly one value, got 2: \"foo\" \"bar\".";
+        check "fun f:s :{ $main foo bar; }; f";
 
-    expected_error="$main: Association replies require key/value pairs, got dangling key: \"k\".";
-    check 'fun f:A :{ r:set k; }; f';
-    check 'fun f:A :{ r:set a x k; }; f';
-    check 'fun f:A :{ r:set a x b y k; }; f';
-
-    main=r:add;
-    local expected_trace=(
-        "at $TRACE_top($main)"
-        "at $TRACE_top(f)"
-    );
-
-    expected_error="$main: Scalar replies require exactly one value, got 0.";
-    check 'fun f:s :{ r:add; }; f';
-    expected_error="$main: Scalar replies require exactly one value, got 2: \"foo\" \"bar\".";
-    check 'fun f:s :{ r:add foo bar; }; f';
-
-    expected_error="$main: Association replies require key/value pairs, got dangling key: \"k\".";
-    check 'fun f:A :{ r:add k; }; f';
-    check 'fun f:A :{ r:add a x k; }; f';
-    check 'fun f:A :{ r:add a x b y k; }; f';
+        expected_error="$main: Association replies require key/value pairs, got dangling key: \"k\".";
+        check "fun f:A :{ $main k; }; f";
+        check "fun f:A :{ $main a x k; }; f";
+        check "fun f:A :{ $main a x b y k; }; f";
+    done;
 }
 
 @test "scalar parameters" {
