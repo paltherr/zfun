@@ -51,6 +51,54 @@ function expected_stderr() {
     fi;
 }
 
+# NAME
+#
+# check – Checks that a command behaves as expected.
+
+# SYNOPSIS
+#
+# check <test-command>
+
+# INPUT VARIABLES
+#
+# - prelude - string: An optional prelude to prepend to the test
+#     command.
+#
+# - expected_status - integer: The command's expected exit status. If
+#     unspecified and expected_error is specified, defaults to 1,
+#     otherwise default to 0.
+#
+# - expected_output - string: The command's expected output on stdout,
+#     if any. If unspecified, defaults to an empty string.
+#
+# - expected_error - string: The command's expected error message, if
+#     any. If unspecified, defaults to an empty string.
+#
+# - expected_usage - array: The command's expected usage lines, if
+#     any. If unspecified, defaults to an empty array.
+#
+# - expected_trace - array: The command's expected stack trace, if
+#     any. If unspecified and expected_error is specified, defaults to
+#     a trace with a single call to the function specified by main,
+#     otherwise defaults to an empty trace. To explicitly specify an
+#     empty trace, set expected_trace to an empty string (because, at
+#     least with some versions of Bash, setting it to an empty array
+#     is the same as unsetting it).
+#
+# - main - string: The name of the function to use in the default
+#     stack trace.
+#
+
+# DESCRIPTION
+#
+# Checks whether the test command (with the prelude prepended) returns
+# with the expected exit status, the expected output on stdout, and
+# the expected output on stderr. The expected output on stderr is the
+# concatenation of the expected error, the expected usage lines, and
+# the expected stack trace.
+
+# BEWARE: The code here is Bash code while the code in the test
+# command is Zsh code.
 function check() {
     local command="${prelude:-}$1";
     echo "# Testing: $TEST_RUNNER ${command@Q}";
