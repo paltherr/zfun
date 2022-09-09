@@ -47,7 +47,7 @@ function expected_stderr() {
         if [ ! -v expected_trace ]; then
             local expected_trace=("at $TRACE_top($main)");
         fi;
-        join "$NL" "${expected_error[@]:-}" "${expected_trace[@]}";
+        join "$NL" "${expected_error[@]:-}" "${expected_usage[@]}" "${expected_trace[@]}";
     fi;
 }
 
@@ -480,10 +480,9 @@ function check() {
 
 @test "invalid function declarations" {
     main=fun;
-    expected_trace=(
+    expected_usage=(
         "Usage: $main name arg1 ... argN :{ ... }"
         "       $main name \"arg1 ... argN\" :{ ... }"
-        "at $TRACE_top($main)"
     );
 
     expected_error="$main: A function name and the token :{ are required.";
@@ -540,8 +539,8 @@ function check() {
     check "fun foo arg1:s arg2:s:a:A arg3:a :{}";
 
     expected_error="$TRACE_top: parse error near \`}'";
-    expected_trace=();
-    expected_trace=""; # !!!
+    expected_usage=();
+    expected_trace="";
     check "fun { echo foo; }";
     check "fun foo { echo foo; }";
     check "fun foo arg1 { echo foo; }";
@@ -631,10 +630,7 @@ function check() {
 
 @test "invalid assignments" {
     main=var;
-    expected_trace=(
-        "Usage: $main <variable-name> := <function-name> [<argument>…]"
-        "at $TRACE_top($main)"
-    );
+    expected_usage=( "Usage: $main <variable-name> := <function-name> [<argument>…]" );
 
     expected_error="$main: A variable name is required.";
     check 'var';
@@ -693,7 +689,7 @@ function check() {
     check 'f() {}; var v := f';
     check 'fun f :{}; var v := f';
 
-    expected_trace=();
+    expected_usage=();
 
     expected_error="Function \"f\" returned without setting a reply.";
     check 'fun f:s :{}; var v := f';
