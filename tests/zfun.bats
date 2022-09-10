@@ -704,6 +704,7 @@ function check() {
         check 't() { local v=z; var v := f; show v; }; t';
         check 't() { local v=(z); var v := f; show v; }; t';
         check 't() { local -A v=(z z); var v := f; show v; }; t';
+        check 'fun g:s :{ r:set z; }; var v := g; var v := f; show v';
         check 'fun g:a :{ r:set z; }; var v := g; var v := f; show v';
         check 'fun g:A :{ r:set z z; }; var v := g; var v := f; show v';
         check 'fun g:s :{ r:set z; }; t() { var v := g; var v := f; show v; }; t';
