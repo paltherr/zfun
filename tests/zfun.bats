@@ -728,6 +728,15 @@ function check() {
         check 't() { local v=z; var v := f; show v; }; t';
         check 'fun g:s :{ r:set z; }; var v := g; var v := f; show v';
         check 'fun g:s :{ r:set z; }; t() { var v := g; var v := f; show v; }; t';
+
+        # The initializer function may have a local variable with the same name as the assigned variable.
+        expected_output=("v=z" "v=$v" );
+        prelude="fun f:$type :{ local v=z; r:set $init; show v; }; ";
+        check 'var v := f; show v';
+        check 't() { var v := f; show v; }; t';
+        prelude="fun g:s :{ r:set z; }; fun f:$type :{ var v := g; r:set $init; show v; }; ";
+        check 'var v := f; show v';
+        check 't() { var v := f; show v; }; t';
     done;
 }
 
