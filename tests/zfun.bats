@@ -683,6 +683,53 @@ function check() {
     check 'fun f:A :{ r:set; }; var v := f; show v';
 }
 
+@test "scopes and assignments" {
+    local type;
+    for type in s a A; do
+        case $type in
+            s ) local init="x" v="x";;
+            a ) local init="x" v="(x)";;
+            A ) local init="x x" v="([x]=x)";;
+        esac;
+
+        echo "";
+        echo "# Testing with ( type='$type' init='$init' v='$v' ):";
+        prelude="fun f:$type :{ r:set $init; }; ";
+
+        # Assignments overwrite same name variables in the same scope.
+        expected_output=("v=$v");
+        check 'local v=z; var v := f; show v';
+        check 'local -a v=(z); var v := f; show v';
+        check 'local -A v; v[z]=z; var v := f; show v';
+        check 't() { local v=z; var v := f; show v; }; t';
+        check 't() { local v=(z); var v := f; show v; }; t';
+        check 't() { local -A v=(z z); var v := f; show v; }; t';
+        check 'fun g:a :{ r:set z; }; var v := g; var v := f; show v';
+        check 'fun g:A :{ r:set z z; }; var v := g; var v := f; show v';
+        check 'fun g:s :{ r:set z; }; t() { var v := g; var v := f; show v; }; t';
+        check 'fun g:a :{ r:set z; }; t() { var v := g; var v := f; show v; }; t';
+        check 'fun g:A :{ r:set z z; }; t() { var v := g; var v := f; show v; }; t';
+
+        # Assignments hide same name variables from enclosing scopes but don't modify them.
+        expected_output=("v=$v" "v=z");
+        check 't() { var v := f; show v; }; local v=z; t; show v';
+        check 't() { var v := f; show v; }; u() { local v=z; t; show v; }; u';
+        expected_output=("v=$v" "v is undefined");
+        check 't() { var v := f; show v; }; local v; unset v; t; show v';
+        check 't() { var v := f; show v; }; u() { local v; unset v; t; show v; }; u';
+        check 't() { var v := f; show v; }; t; show v';
+        check 't() { var v := f; show v; }; u() { t; show v; }; u';
+
+        # Assignments hide same name variables in the initializer function.
+        expected_output=("v is undefined" "v is undefined" "v=$v" );
+        prelude="fun f:$type :{ show v; r:set $init; show v; }; ";
+        check 'local v=z; var v := f; show v';
+        check 't() { local v=z; var v := f; show v; }; t';
+        check 'fun g:a :{ r:set z; }; var v := g; var v := f; show v';
+        check 'fun g:s :{ r:set z; }; t() { var v := g; var v := f; show v; }; t';
+    done;
+}
+
 @test "invalid assignments" {
     main=var;
     expected_usage=( "Usage: $main <variable-name> := <function-name> [<argument>…]" );

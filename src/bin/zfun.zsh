@@ -306,6 +306,6 @@ function var() {
 }
 
 # Space at the end to trigger alias resolution on first argument.
-galiases[:=]='":="; local $_zfun_var_name=; unset $_zfun_var_name; var -zfun-var-callback- $_zfun_var_name ';
+galiases[:=]='":="; local $_zfun_var_name > /dev/null; unset $_zfun_var_name; var -zfun-var-callback- $_zfun_var_name ';
 
 ################################################################################
