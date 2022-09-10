@@ -726,7 +726,7 @@ function check() {
         prelude="fun f:$type :{ show v; r:set $init; show v; }; ";
         check 'local v=z; var v := f; show v';
         check 't() { local v=z; var v := f; show v; }; t';
-        check 'fun g:a :{ r:set z; }; var v := g; var v := f; show v';
+        check 'fun g:s :{ r:set z; }; var v := g; var v := f; show v';
         check 'fun g:s :{ r:set z; }; t() { var v := g; var v := f; show v; }; t';
     done;
 }
