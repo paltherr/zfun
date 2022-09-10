@@ -42,12 +42,16 @@ function join() {
     fi;
 }
 
+function expected_stdout() {
+    join "$NL" "${expected_output[@]}";
+}
+
 function expected_stderr() {
     if [ -v expected_error ]; then
         if [ ! -v expected_trace ]; then
             local expected_trace=("at $TRACE_top($main)");
         fi;
-        join "$NL" "${expected_error[@]:-}" "${expected_usage[@]}" "${expected_trace[@]}";
+        join "$NL" "${expected_error[@]}" "${expected_usage[@]}" "${expected_trace[@]}";
     fi;
 }
 
@@ -65,37 +69,40 @@ function expected_stderr() {
 #     command.
 #
 # - expected_status - integer: The command's expected exit status. If
-#     unspecified and expected_error is specified, defaults to 1,
+#     unspecified and "expected_error" is specified, defaults to 1,
 #     otherwise default to 0.
 #
-# - expected_output - string: The command's expected output on stdout,
-#     if any. If unspecified, defaults to an empty string.
+# - expected_output - array: The command's expected output lines. If
+#     unspecified, defaults to an empty array.
 #
-# - expected_error - string: The command's expected error message, if
-#     any. If unspecified, defaults to an empty string.
+# - expected_error - array: The command's expected error lines. If
+#     unspecified, defaults to an empty array.
 #
-# - expected_usage - array: The command's expected usage lines, if
-#     any. If unspecified, defaults to an empty array.
+# - expected_usage - array: The command's expected usage lines. If
+#     unspecified, defaults to an empty array.
 #
-# - expected_trace - array: The command's expected stack trace, if
-#     any. If unspecified and expected_error is specified, defaults to
-#     a trace with a single call to the function specified by main,
-#     otherwise defaults to an empty trace. To explicitly specify an
-#     empty trace, set expected_trace to an empty string (because, at
-#     least with some versions of Bash, setting it to an empty array
-#     is the same as unsetting it).
+# - expected_trace - array: The command's expected stack trace
+#     elements. If unspecified and "expected_error" is specified,
+#     defaults to a trace with a single call to the function specified
+#     by "main", otherwise defaults to an empty array. To explicitly
+#     specify no trace, set "expected_trace" to an empty string
+#     (because, at least with some versions of Bash, setting it to an
+#     empty array is the same as no specifying it).
 #
 # - main - string: The name of the function to use in the default
 #     stack trace.
 #
+# Array input variables whose value are an array containing a single
+# string may also be directly initialized with that string.
 
 # DESCRIPTION
 #
 # Checks whether the test command (with the prelude prepended) returns
-# with the expected exit status, the expected output on stdout, and
-# the expected output on stderr. The expected output on stderr is the
-# concatenation of the expected error, the expected usage lines, and
-# the expected stack trace.
+# with the expected exit status, the expected stdout output, and the
+# expected stderr output. The expected stdout output is the
+# concatenation of the expected output lines. The expected stderr
+# output is the concatenation of the expected error lines, the
+# expected usage lines, and the expected stack trace elements.
 
 # BEWARE: The code here is Bash code while the code in the test
 # command is Zsh code.
@@ -106,12 +113,12 @@ function check() {
     run --separate-stderr $TEST_RUNNER "$command";
     if ((${expected_status:-0})); then
         assert_failure ${expected_status};
-    elif [ -n "${expected_error:-}" ]; then
+    elif [ -n "${expected_error[*]}" ]; then
         assert_failure 1;
     else
         assert_success;
     fi;
-    assert_equal "$output" "${expected_output:-}";
+    assert_equal "$output" "$(expected_stdout)";
     assert_equal "$stderr" "$(expected_stderr)";
 }
 
