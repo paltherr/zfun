@@ -297,7 +297,7 @@ function var() {
         return $exit_status;
     fi;
 
-    _zfun_check-token-expansion ":=" "$@"; argv[$#]=();
+    _zfun_check-token-expansion ":=" "$@"; argv[#]=();
 
     [[ $# -ge 1 ]] || $usage "A variable name is required.";
     [[ $# -eq 1 ]] || $usage "A single variable name is allowed, got $(_zfun-args-show "$@").";
