@@ -193,7 +193,7 @@ function _zfun-args-parse() {
     if [[ $arg_count -ge 1 ]]; then
         local i;
         for i in {1..$arg_count}; do
-            case $arg_types[$i] in
+            case $arg_types[i] in
                 scalar      ) echo "local $arg_names[$i]=\$$i;";;
                 array       ) echo "local -a $arg_names[$i]=(\${=$i});";;
                 association ) echo "local -A $arg_names[$i]=(\${=$i});";;
