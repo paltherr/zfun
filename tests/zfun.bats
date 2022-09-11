@@ -630,8 +630,6 @@ function check() {
 }
 
 @test "scalar assignments" {
-    main=var:=;
-
     expected_output="v=foobar";
     check 'fun f:s :{ r:set foobar; }; var v := f; show v';
 
@@ -646,8 +644,6 @@ function check() {
 }
 
 @test "array assignments" {
-    main=var:=;
-
     expected_output="v=(a b c d)";
     check 'fun f:a :{ r:set a b c d; }; var v := f; show v';
 
@@ -665,8 +661,6 @@ function check() {
 }
 
 @test "association assignments" {
-    main=var:=;
-
     expected_output="v=([a]=x [b]=y)";
     check 'fun f:A :{ r:set a x b y; }; var v := f; show v';
 
