@@ -414,9 +414,9 @@ function check() {
 
 @test "invalid replies" {
     for main in r:set r:add; do
-        echo "$NL# Testing with ( main='$main' ):";
+        echo "$NL# Testing with (main='$main'):";
 
-        local expected_trace=("at $TRACE_top($main)");
+        expected_trace=("at $TRACE_top($main)");
 
         expected_error="$main: Replies can only be set from within functions that have a reply value.";
         check "$main;";
@@ -684,7 +684,6 @@ function check() {
 }
 
 @test "scopes and assignments" {
-    local type;
     for type in s a A; do
         case $type in
             s ) local init="x" v="x";;
@@ -692,8 +691,7 @@ function check() {
             A ) local init="x x" v="([x]=x)";;
         esac;
 
-        echo "";
-        echo "# Testing with ( type='$type' init='$init' v='$v' ):";
+        echo "$NL# Testing with (type='$type' init='$init' v='$v'):";
         prelude="fun f:$type :{ r:set $init; }; ";
 
         # Assignments overwrite same name variables in the same scope.
@@ -722,7 +720,7 @@ function check() {
         check 't() { var v := f; show v; }; u() { t; show v; }; u';
 
         # Assignments hide same name variables in the initializer function.
-        expected_output=("v is undefined" "v is undefined" "v=$v" );
+        expected_output=("v is undefined" "v is undefined" "v=$v");
         prelude="fun f:$type :{ show v; r:set $init; show v; }; ";
         check 'local v=z; var v := f; show v';
         check 't() { local v=z; var v := f; show v; }; t';
@@ -730,7 +728,7 @@ function check() {
         check 'fun g:s :{ r:set z; }; t() { var v := g; var v := f; show v; }; t';
 
         # The initializer function may have a local variable with the same name as the assigned variable.
-        expected_output=("v=z" "v=$v" );
+        expected_output=("v=z" "v=$v");
         prelude="fun f:$type :{ local v=z; r:set $init; show v; }; ";
         check 'var v := f; show v';
         check 't() { var v := f; show v; }; t';
@@ -742,7 +740,7 @@ function check() {
 
 @test "invalid assignments" {
     main=var;
-    expected_usage=( "Usage: $main <variable-name> := <function-name> [<argument>…]" );
+    expected_usage=("Usage: $main <variable-name> := <function-name> [<argument>…]");
 
     expected_error="$main: A variable name is required.";
     check 'var';
