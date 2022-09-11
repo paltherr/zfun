@@ -5,10 +5,10 @@ set -eu
 # TODO: Split into multiple files.
 
 ################################################################################
+# Test setup
 
 function setup_file() {
     bats_require_minimum_version 1.5.0;
-    export TEST_FILE=tests/test-runner.zsh;
     export TEST_RUNNER=tests/test-runner.zsh;
     export TEST_COMMAND=tests/test-command.zsh;
     export TRACE_top=$($TEST_RUNNER "eval 'echo \$funcfiletrace[1]'");
@@ -26,13 +26,7 @@ function setup() {
 }
 
 ################################################################################
-
-function quoted() {
-    local arg;
-    for arg; do
-        echo -n " \"$arg\"";
-    done;
-}
+# Helper functions
 
 function join() {
     local delimiter=${1:-};
@@ -123,6 +117,9 @@ function check() {
     assert_equal "$stderr" "$(expected_stderr)";
 }
 
+################################################################################
+# Test auxiliary functions
+
 @test "function names" {
     main=_zfun-parse-fun-name;
     for type in "" ":s" ":xyz" ":x:y:z" ":" ":::"; do
@@ -179,6 +176,9 @@ function check() {
         check "usage=usage; depth=0; $main default-result 'name:$type'";
     done;
 }
+
+################################################################################
+# Test functions
 
 @test "function declarations" {
     check 'fun f       :{ echo foo }';
@@ -414,8 +414,7 @@ function check() {
 
 @test "invalid replies" {
     for main in r:set r:add; do
-        echo "";
-        echo "# Testing with ( main='$main' ):";
+        echo "$NL# Testing with ( main='$main' ):";
 
         local expected_trace=("at $TRACE_top($main)");
 
@@ -630,6 +629,9 @@ function check() {
     check 'fun f a b :{}; f ""';
 }
 
+################################################################################
+# Test variable assignments
+
 @test "scalar assignments" {
     expected_output="v=foobar";
     check 'fun f:s :{ r:set foobar; }; var v := f; show v';
@@ -803,3 +805,5 @@ function check() {
     check 'fun f:a :{}; var v := f';
     check 'fun f:A :{}; var v := f';
 }
+
+################################################################################
