@@ -38,18 +38,6 @@ set -o localtraps;
 
 ################################################################################
 
-# Name of the function in the "fun … :{ … }" construct.
-typeset -g _zfun_fun_name;
-
-# Maps function names to reply types ("void", "scalar", "array", "association").
-typeset -g -A _zfun_fun_type;
-
-# Maps function names to argument names separated by spaces.
-typeset -g -A _zfun_arg_names;
-
-# Maps function names to argument types separated by spaces.
-typeset -g -A _zfun_arg_types;
-
 function _zfun-parse-fun-name() {
     local depth=$((depth+1));
     local input=$1; shift 1;
@@ -87,45 +75,68 @@ function _zfun-parse-type() {
     esac;
 }
 
-function _zfun-fun-usage() {
+function _zfun_check-token-expansion() {
     local depth=$((depth+1));
-    local self=$funcstack[$depth];
+    local token=$1; shift 1;
+    local token_index=$@[(i)*$~token*];
+    if [[ $token_index -le $# ]]; then
+        [[ $@[token_index] != *?$~token ]] || $usage "The token $token must be preceded by a space.";
+        [[ $@[token_index] != $~token?* ]] || $usage "The token $token must be followed by a space.";
+        [[ $@[token_index] = $~token ]] || $usage "The token $token must be preceded and followed by a space.";
+        [[ -v galiases[$token] ]] || $usage "The global alias for the token $token must be enabled.";
+        $usage "The token $token must be present as a literal.";
+    fi;
+    [[ $# -ge 1 && $@[#] = :token-expansion-marker: ]] || $usage "The token $token is required.";
+}
+
+################################################################################
+
+# Name of the function in the "fun … :{ … }" construct.
+typeset -g _zfun_fun_name;
+
+# Maps function names to reply types ("void", "scalar", "array", "association").
+typeset -g -A _zfun_fun_type;
+
+# Maps function names to argument names separated by spaces.
+typeset -g -A _zfun_arg_names;
+
+# Maps function names to argument types separated by spaces.
+typeset -g -A _zfun_arg_types;
+
+function _zfun-fun-usage() {
+    local self=$funcstack[depth+1];
     local error=(
         "$1"
-        "Usage: $self name arg1 ... argN :{ ... }"
-        "       $self name \"arg1 ... argN\" :{ ... }"
+        "Usage: $self <function-name>[:<reply-type>] [(<parameter-name>[:<parameter-type>])…] :{ … }"
+        "       $self <function-name>[:<reply-type>] \"[(<parameter-name>[:<parameter-type>])…]\" :{ … }"
     );
-    usage -$((depth-1)) ${(F)error}
+    usage -$depth ${(F)error}
 }
 
 # Usage:
-# - fun name arg1 ... argN :{ ... }
-# - fun name "arg1 ... argN" :{ ... }
-# - fun "name(arg1 ... argN)" :{ ... }
+# - fun <function-name>[:<reply-type>] [(<parameter-name>[:<parameter-type>])…] :{ … }
+# - fun <function-name>[:<reply-type>] "[(<parameter-name>[:<parameter-type>])…]" :{ … }
 # TODO: Add support for flags.
 # TODO: Add support for optional parameters.
 # TODO: Add support for final catch-all parameter.
 function fun() {
-    local usage=${usage:-_zfun-fun-usage};
-    local depth=$((${depth:-0}+1));
+    local usage=_zfun-fun-usage;
+    local depth=1;
 
-    [[ $# -ge 1 ]] || $usage "A function name and the token :{ are required.";
-    [[ ${@[$#]} = *:\{ ]] || $usage "The token :{ is required.";
-    [[ ${@[$#]} = :\{ ]] || $usage "The token :{ must be preceded by a space.";
-    [[ $# -ge 2 ]] || $usage "A function name is required.";
+    _zfun_check-token-expansion ":{" "$@"; argv[#]=();
 
+    [[ ${#@} -ge 1 ]] || $usage "A function name is required.";
     local fun=$1; shift 1;
     local fun_name=$(_zfun-parse-fun-name "$fun");
     local fun_type=$(_zfun-parse-type void "$fun");
 
     # TODO: Add support for syntax 'fun "name(arg1 arg2)" { ... }'
-    local args=("${@[1,-2]}"); shift $#args;
-    [[ $#args -ne 1 ]] || args=(${(s: :)args});
+    [[ $# -ne 1 ]] || argv=(${(s: :)@});
 
     local arg_names=();
     local arg_types=();
     local arg;
-    for arg in "${args[@]}"; do
+    for arg do
         arg_names+=($(_zfun-parse-arg-name "$arg"));
         arg_types+=($(_zfun-parse-type scalar "$arg"));
     done;
@@ -192,7 +203,7 @@ function _zfun-args-parse() {
     fi;
 }
 
-alias -g ':{'='":{"; function $_zfun_fun_name { eval $(_zfun-args-parse "$@");';
+alias -g ':{'=':token-expansion-marker:; function $_zfun_fun_name { eval $(_zfun-args-parse "$@");';
 alias -g ":{}"=':{ }'
 
 ################################################################################

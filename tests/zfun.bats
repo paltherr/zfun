@@ -12,6 +12,8 @@ function setup_file() {
     export TEST_RUNNER=tests/test-runner.zsh;
     export TEST_COMMAND=tests/test-command.zsh;
     export TRACE_top=$($TEST_RUNNER "eval 'echo \$funcfiletrace[1]'");
+    export TRACE_top_file=${TRACE_top%:*};
+    export TRACE_top_line=${TRACE_top##*:};
     export REPLY_NAME=_zfun_reply_1;
     export NL=$'\n';
 }
@@ -536,14 +538,12 @@ function check() {
 @test "invalid function declarations" {
     main=fun;
     expected_usage=(
-        "Usage: $main name arg1 ... argN :{ ... }"
-        "       $main name \"arg1 ... argN\" :{ ... }"
+        "Usage: $main <function-name>[:<reply-type>] [(<parameter-name>[:<parameter-type>])…] :{ … }"
+        "       $main <function-name>[:<reply-type>] \"[(<parameter-name>[:<parameter-type>])…]\" :{ … }"
     );
 
-    expected_error="$main: A function name and the token :{ are required.";
-    check "fun";
-
     expected_error="$main: The token :{ is required.";
+    check "fun";
     check "fun f";
     check "fun f arg1";
     check "fun f arg1 arg2";
@@ -552,6 +552,29 @@ function check() {
     check "fun f:{" "echo foo" "}";
     check "fun f arg1:{" "echo foo" "}";
     check "fun f arg1 arg2:{" "echo foo" "}";
+
+    expected_error="$main: The token :{ must be followed by a space.";
+    check "fun f :{echo foo" "}";
+    check "fun f arg1 :{echo foo" "}";
+    check "fun f arg1 arg2 :{echo foo" "}";
+
+    expected_error="$main: The token :{ must be preceded and followed by a space.";
+    check "fun f:{echo foo" "}";
+    check "fun f arg1:{echo foo" "}";
+    check "fun f arg1 arg2:{echo foo" "}";
+
+    expected_error="$main: The token :{ must be present as a literal.";
+    check "fun f ':{'" "echo foo" "}";
+    check "fun f arg1 ':{'" "echo foo" "}";
+    check "fun f arg1 arg2 ':{'" "echo foo" "}";
+
+    expected_error="$main: The global alias for the token :{ must be enabled.";
+    export TRACE_top_file=${TRACE_top%:*};
+    expected_trace=("at $TRACE_top_file:$((TRACE_top_line+1))($main)")
+    check "unalias ':{';" "fun f :{" "echo foo" "}";
+    check "unalias ':{';" "fun arg1 f :{" "echo foo" "}";
+    check "unalias ':{';" "fun arg1 arg2 f :{" "echo foo" "}";
+    unset expected_trace;
 
     expected_error="$main: A function name is required.";
     check "fun :{" "echo foo" "}";
