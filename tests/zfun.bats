@@ -635,6 +635,7 @@ function check() {
 @test "scalar assignments" {
     expected_output="v=foobar";
     check 'fun f:s :{ r:set foobar; }; var v := f; show v';
+    check 'fun f:s :{ r:set foobar; }; alias g=f;' 'var v := g; show v';
 
     expected_output="v='   foo   bar   '";
     check 'fun f:s :{ r:set "   foo   bar   "; }; var v := f; show v';
@@ -649,6 +650,7 @@ function check() {
 @test "array assignments" {
     expected_output="v=(a b c d)";
     check 'fun f:a :{ r:set a b c d; }; var v := f; show v';
+    check 'fun f:a :{ r:set a b c d; }; alias g=f;' 'var v := g; show v';
 
     expected_output="v=('   foo   bar   ')";
     check 'fun f:a :{ r:set "   foo   bar   "; }; var v := f; show v';
@@ -666,6 +668,7 @@ function check() {
 @test "association assignments" {
     expected_output="v=([a]=x [b]=y)";
     check 'fun f:A :{ r:set a x b y; }; var v := f; show v';
+    check 'fun f:A :{ r:set a x b y; }; alias g=f;' 'var v := g; show v';
 
     expected_output="v=(['   aaa    aaa   ']='   xxx   yyy   ')";
     check 'fun f:A :{ r:set "   aaa    aaa   " "   xxx   yyy   "; }; var v := f; show v';
