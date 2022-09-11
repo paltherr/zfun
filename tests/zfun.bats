@@ -211,7 +211,7 @@ function check() {
 }
 
 @test "function calls" {
-    expected_output=$'foo';
+    expected_output=("foo");
     check 'fun f       :{ echo foo }; f';
     check 'fun f ""    :{ echo foo }; f';
     check 'fun f  a    :{ echo foo }; f x';
@@ -219,22 +219,22 @@ function check() {
     check 'fun f  a b  :{ echo foo }; f x y';
     check 'fun f "a b" :{ echo foo }; f x y';
 
-    expected_output=$'foo\nv=bar';
+    expected_output=("foo" "v=bar");
     check 'fun f:s     :{ echo foo; r:set bar }; var v := f    ; echo v=$v';
     check 'fun f:s a   :{ echo foo; r:set bar }; var v := f x  ; echo v=$v';
     check 'fun f:s a b :{ echo foo; r:set bar }; var v := f x y; echo v=$v';
 
-    expected_output=$'foo\nv=1 2 3';
+    expected_output=("foo" "v=1 2 3");
     check 'fun f:a     :{ echo foo; r:set 1 2 3 }; var v := f    ; echo v=$v';
     check 'fun f:a a   :{ echo foo; r:set 1 2 3 }; var v := f x  ; echo v=$v';
     check 'fun f:a a b :{ echo foo; r:set 1 2 3 }; var v := f x y; echo v=$v';
 
-    expected_output=$'foo\nv=k v';
+    expected_output=("foo" "v=k v");
     check 'fun f:A     :{ echo foo; r:set k v }; var v := f    ; echo v=${(kv)v}';
     check 'fun f:A a   :{ echo foo; r:set k v }; var v := f x  ; echo v=${(kv)v}';
     check 'fun f:A a b :{ echo foo; r:set k v }; var v := f x y; echo v=${(kv)v}';
 
-    expected_output=$'';
+    expected_output=();
     check 'fun f       :{}; f';
     check 'fun f ""    :{}; f';
     check 'fun f  a    :{}; f x';
@@ -454,27 +454,27 @@ function check() {
 }
 
 @test "scalar parameters" {
-    expected_output="a=x";
+    expected_output=("a=x");
     check 'fun f a :{ show a }; f x;';
     check 'fun f a:s :{ show a }; f x;';
 
-    expected_output="a=x, b=y";
+    expected_output=("a=x, b=y");
     check 'fun f a b :{ show a b }; f x y';
     check 'fun f a:s b :{ show a b }; f x y';
     check 'fun f a b:s :{ show a b }; f x y';
     check 'fun f a:s b:s :{ show a b }; f x y';
 
-    expected_output="a=x, b=y, c=z";
+    expected_output=("a=x, b=y, c=z");
     check 'fun f a b c :{ show a b c }; f x y z';
     check 'fun f a:s b:s c:s :{ show a b c }; f x y z';
 
-    expected_output="a=''${NL}a='  x  x  '${NL}a='x\$y\"z'${NL}a=\$' a\\nb '";
+    expected_output=("a=''" "a='  x  x  '" "a='x\$y\"z'" "a=\$' a\\nb '");
     check 'fun f a :{ show a }; f ""; f "  x  x  "; f "x\$y\"z"; f $(echo " a"; echo "b ")';
 
-    expected_output="a=x, b='', c=z${NL}a='', b='  ', c=''${NL}a='', b='', c=''";
+    expected_output=("a=x, b='', c=z" "a='', b='  ', c=''" "a='', b='', c=''");
     check 'fun f a b c :{ show a b c }; f x "" z; f "" "  " ""; f "" "" ""';
 
-    expected_output="a=\$'x\\C-@y\\C-@z'";
+    expected_output=("a=\$'x\\C-@y\\C-@z'");
     check 'fun f a :{ show a }; v=(x y z); f "$v"';
 }
 
