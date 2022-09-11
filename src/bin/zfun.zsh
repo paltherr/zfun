@@ -268,7 +268,7 @@ function _zfun-var-usage() {
         "$1"
         "Usage: var <variable-name> := <function-name> [<argument>…]"
     );
-    usage -1 ${(F)error}
+    usage -$depth ${(F)error}
 }
 
 # Usage:
@@ -276,47 +276,35 @@ function _zfun-var-usage() {
 # TODO: Add support for += to append values.
 function var() {
     local usage=_zfun-var-usage;
+    local depth=1;
 
-    if [[ ${1:-} = -zfun-var-callback- ]]; then
-        shift 1;
-
-        local var_name=$1; shift 1;
+    if [[ ${1:-} = :var-callback-marker: ]] && shift 1; then
+        local var_name=$_zfun_var_name;
 
         [[ $# -ge 1 ]] || $usage "A function call is required.";
-
         local fun_name=$1; shift 1;
         local fun_type=${_zfun_fun_type[$fun_name]:-void};
-
         [[ $fun_type != void ]] ||
             $usage "Function ${(qqq)fun_name} has no reply value. It can't be used with \"var\".";
 
-        $fun_name "$@";
-        local exit_status=$?
+        $fun_name "$@"; local exit_status=$?
 
-    # TODO: Should this be moved to an EXIT trap of the called function?
-    local reply_name=_zfun_reply_$(($#funcstack + 1));
-    [[ ${(P)+reply_name} -eq 1 ]] ||
-        abort -1 "Function ${(qqq)fun_name} returned without setting a reply.";
-    _zfun-write $var_name $fun_type set "${(kv)${(P)reply_name}[@]}";
-    return $exit_status;
+        # TODO: Should this be moved to an EXIT trap of the called function?
+        local reply_name=_zfun_reply_$(($#funcstack + 1));
+        [[ ${(P)+reply_name} -eq 1 ]] ||
+            abort -1 "Function ${(qqq)fun_name} returned without setting a reply.";
+        _zfun-write $var_name $fun_type set "${(kv)${(P)reply_name}[@]}";
+        return $exit_status;
     fi;
 
-    [[ $# -ge 1 && $1 != := ]] || $usage "A variable name is required.";
+    _zfun_check-token-expansion ":=" "$@"; argv[$#]=();
 
-    local token_index=$@[(i)*:=*];
-    [[ $token_index -le $# ]] || $usage "The token := is required.";
-    [[ $@[token_index] != *?:= ]] || $usage "The token := must be preceded by a space.";
-    [[ $@[token_index] != :=?* ]] || $usage "The token := must be followed by a space.";
-    [[ $@[token_index] = := ]] || $usage "The token := must be preceded and followed by a space.";
-    [[ $token_index -eq 2 ]] ||
-        $usage "A single variable name is allowed, got $(_zfun-args-show "$@[1,token_index-1]").";
-
-    [[ $# -eq 2 ]] || abort "Found too many arguments: ${(qqq)@}";
-
+    [[ $# -ge 1 ]] || $usage "A variable name is required.";
+    [[ $# -eq 1 ]] || $usage "A single variable name is allowed, got $(_zfun-args-show "$@").";
     typeset -g _zfun_var_name=$1;
 }
 
 # Space at the end to trigger alias resolution on first argument.
-galiases[:=]='":="; local $_zfun_var_name > /dev/null; unset $_zfun_var_name; var -zfun-var-callback- $_zfun_var_name ';
+galiases[:=]=':token-expansion-marker:; local $_zfun_var_name > /dev/null; unset $_zfun_var_name; var :var-callback-marker: ';
 
 ################################################################################

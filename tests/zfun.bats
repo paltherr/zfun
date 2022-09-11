@@ -765,13 +765,8 @@ function check() {
     main=var;
     expected_usage=("Usage: $main <variable-name> := <function-name> [<argument>…]");
 
-    expected_error="$main: A variable name is required.";
-    check 'var';
-    check 'var :=';
-    check 'var := f';
-    check 'var := f x';
-
     expected_error="$main: The token := is required.";
+    check 'var';
     check 'var v';
     check 'var v w';
     check 'var v w u';
@@ -804,6 +799,33 @@ function check() {
     check 'var v w:=f x';
     check 'var v w u:=f';
     check 'var v w u:=f x';
+
+    expected_error="$main: The token := must be present as a literal.";
+    check 'var ":="';
+    check 'var ":=" f';
+    check 'var ":=" f x';
+    check 'var v ":="';
+    check 'var v ":=" f';
+    check 'var v ":=" f x';
+    check 'var v w ":="';
+    check 'var v w ":=" f';
+    check 'var v w ":=" f x';
+    check 'var v w u ":="';
+    check 'var v w u ":=" f';
+    check 'var v w u ":=" f x';
+
+    expected_error="$main: The global alias for the token := must be enabled.";
+    export TRACE_top_file=${TRACE_top%:*};
+    expected_trace=("at $TRACE_top_file:$((TRACE_top_line+1))($main)")
+    check 'unalias ":=";' 'var v := ';
+    check 'unalias ":=";' 'var v := f';
+    check 'unalias ":=";' 'var v := f x';
+    unset expected_trace;
+
+    expected_error="$main: A variable name is required.";
+    check 'var :=';
+    check 'var := f';
+    check 'var := f x';
 
     expected_error="$main: A single variable name is allowed, got 2: \"v\" \"w\".";
     check 'var v w :=';
