@@ -61,7 +61,7 @@ function expected_stderr() {
 
 # SYNOPSIS
 #
-# check <test-command>
+# check <command-line>…
 
 # INPUT VARIABLES
 #
@@ -97,17 +97,18 @@ function expected_stderr() {
 
 # DESCRIPTION
 #
-# Checks whether the test command (with the prelude prepended) returns
-# with the expected exit status, the expected stdout output, and the
-# expected stderr output. The expected stdout output is the
-# concatenation of the expected output lines. The expected stderr
-# output is the concatenation of the expected error lines, the
-# expected usage lines, and the expected stack trace elements.
+# Checks whether the command obtained by concatenating the prelude and
+# the command lines returns with the expected exit status, the
+# expected stdout output, and the expected stderr output. The expected
+# stdout output is the concatenation of the expected output lines. The
+# expected stderr output is the concatenation of the expected error
+# lines, the expected usage lines, and the expected stack trace
+# elements.
 
 # BEWARE: The code here is Bash code while the code in the test
 # command is Zsh code.
 function check() {
-    local command="${prelude:-}$1";
+    local command="${prelude:-}$(join "$NL" "$@")";
     echo "# Testing: $TEST_RUNNER ${command@Q}";
 
     run --separate-stderr $TEST_RUNNER "$command";
@@ -549,12 +550,12 @@ function check() {
     check "fun f arg1 arg2";
 
     expected_error="$main: The token :{ must be preceded by a space.";
-    check "fun f:{${NL}echo foo${NL}}";
-    check "fun f arg1:{${NL}echo foo${NL}}";
-    check "fun f arg1 arg2:{${NL}echo foo${NL}}";
+    check "fun f:{" "echo foo" "}";
+    check "fun f arg1:{" "echo foo" "}";
+    check "fun f arg1 arg2:{" "echo foo" "}";
 
     expected_error="$main: A function name is required.";
-    check "fun :{${NL}echo foo${NL}}";
+    check "fun :{" "echo foo" "}";
 
     expected_error="$main: Illegal function name: \"\".";
     check "fun '' :{}";
