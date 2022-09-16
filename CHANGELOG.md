@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Description of release process in Releasing.md.
+- Description of release process in [Releasing.md](Releasing.md).
 
 ### Changed
 
@@ -20,8 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Bug https://github.com/paltherr/zfun/issues/1: `var` fails to overwrite local non-scalar variables.
-- Bug https://github.com/paltherr/zfun/issues/2: `var` does nothing if `:=` isn't preceded by a space.
+- [Issue #1](https://github.com/paltherr/zfun/issues/1): `var` fails to overwrite local non-scalar variables.
+- [Issue #2](https://github.com/paltherr/zfun/issues/2): `var` does nothing if `:=` isn't preceded by a space.
 
 ## [0.1.0](https://github.com/paltherr/zfun/releases/tag/v0.1.0) - 2022-04-12
 
