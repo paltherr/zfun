@@ -149,6 +149,9 @@ function fun() {
 
 ################################################################################
 
+# Environment of the function.
+typeset -g -a _zfun_fun_env;
+
 function _zfun-args-show() {
     echo -E - "${#}${${(j: :)${(qqq)@}}/\"/: \"}";
 }
@@ -156,6 +159,9 @@ function _zfun-args-show() {
 function _zfun-args-parse() {
     local fun_name=$funcstack[2];
     local fun_type=${_zfun_fun_type[$fun_name]};
+
+    typeset -g -a _zfun_fun_env=();
+    local -i env=1;
 
     # If the function has a reply value, set up a reply variable. It's
     # not possible to write directly into a user provided variable
@@ -167,20 +173,20 @@ function _zfun-args-parse() {
         # stack frame is required.
         local reply_frame=$(($#funcstack - 1));
         local reply_name=_zfun_reply_$reply_frame;
-        echo "local _zfun_reply_name=$reply_name;";
-        echo "local _zfun_reply_type=$fun_type;";
+        _zfun_fun_env[env++]="local _zfun_reply_name=$reply_name;";
+        _zfun_fun_env[env++]="local _zfun_reply_type=$fun_type;";
         # We keep track of the reply's stack frame to ensure that
         # replies are only set from within the body of the function
         # and not from nested function calls.
-        echo "local _zfun_reply_frame=$reply_frame;";
+        _zfun_fun_env[env++]="local _zfun_reply_frame=$reply_frame;";
         # We keep track of the reply's shell to ensure that replies
         # are only set from within the same shell. Setting replies
         # from subshells is impossible because subshells can't modify
         # variables of their parent shell.
-        echo "local _zfun_reply_shell=\$ZSH_SUBSHELL;";
+        _zfun_fun_env[env++]="local _zfun_reply_shell=\$ZSH_SUBSHELL;";
         # Unset the reply variable to ensure that replies from
         # previous function calls won't affect this function's reply.
-        echo "unset $reply_name;";
+        _zfun_fun_env[env++]="unset $reply_name;";
     fi;
 
     local arg_names=(${=_zfun_arg_names[$fun_name]});
@@ -194,16 +200,16 @@ function _zfun-args-parse() {
         local i;
         for i in {1..$arg_count}; do
             case $arg_types[i] in
-                scalar      ) echo "local $arg_names[$i]=\$$i;";;
-                array       ) echo "local -a $arg_names[$i]=(\${=$i});";;
-                association ) echo "local -A $arg_names[$i]=(\${=$i});";;
+                scalar      ) _zfun_fun_env[env++]="local $arg_names[$i]=\$$i;";;
+                array       ) _zfun_fun_env[env++]="local -a $arg_names[$i]=(\${=$i});";;
+                association ) _zfun_fun_env[env++]="local -A $arg_names[$i]=(\${=$i});";;
                 *           ) abort "Unrecognised type: ${(qqq)arg_type[$i]}";;
             esac;
         done;
     fi;
 }
 
-alias -g ':{'=':token-expansion-marker:; function $_zfun_fun_name { eval $(_zfun-args-parse "$@");';
+alias -g ':{'=':token-expansion-marker:; function $_zfun_fun_name { _zfun-args-parse "$@"; eval $_zfun_fun_env;';
 alias -g ":{}"=':{ }'
 
 ################################################################################
