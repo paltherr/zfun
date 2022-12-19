@@ -97,6 +97,9 @@ typeset -g _zfun_fun_name;
 # Maps function names to reply types ("void", "scalar", "array", "association").
 typeset -g -A _zfun_fun_type;
 
+# Maps function names to initialization code.
+typeset -g -A _zfun_fun_init;
+
 # Maps function names to argument names separated by spaces.
 typeset -g -A _zfun_arg_names;
 
@@ -136,7 +139,7 @@ function fun() {
     local arg_names=();
     local arg_types=();
     local arg;
-    for arg do
+    for arg; do
         arg_names+=($(_zfun-parse-arg-name "$arg"));
         arg_types+=($(_zfun-parse-type scalar "$arg"));
     done;
@@ -145,71 +148,66 @@ function fun() {
     _zfun_fun_type[$fun_name]=$fun_type;
     _zfun_arg_names[$fun_name]="$arg_names";
     _zfun_arg_types[$fun_name]="$arg_types";
+
+    local local__=();
+    local local_A=();
+    local fun_init=();
+
+    local arg_count=$#arg_names;
+    local arg_error="\"Expected $arg_count argument(s), got \$(_zfun-args-show \"\$@\").\"";
+    fun_init+="[[ \$# -eq $arg_count ]] || usage -1 $arg_error";
+    if [[ $arg_count -ge 1 ]]; then
+        local i;
+        for i in {1..$arg_count}; do
+            case $arg_types[i] in
+                scalar      ) local__+="$arg_names[i]=\$$i";;
+                array       ) local__+="$arg_names[i]=(\${=$i})";;
+                association ) local_A+="$arg_names[i]=(\${=$i})";;
+                *           ) abort "Unrecognised type: ${(qqq)arg_type[$i]}";;
+            esac;
+        done;
+    fi;
+
+    # If the function has a reply value, set up a reply variable. It's
+    # not possible to write directly into a user provided variable
+    # because the function may have a local variable with the same,
+    # which would hide it.
+    if [[ $fun_type != void ]]; then
+        # The reply's shell. Used to ensure that replies are only set
+        # from within the same shell (because subshells can't modify
+        # variables of their parent shell).
+        local__+="_zfun_reply_shell=\$ZSH_SUBSHELL";
+        # The reply's stack frame. Used to ensure that replies are set
+        # from within the function's body and not from within nested
+        # function calls.
+        local__+="_zfun_reply_frame=\$((\$#funcstack-1))";
+        # The reply's variable. With nested function calls, multiple
+        # reply variables may be needed at the same time. In the worst
+        # case, one variable per stack frame is needed.
+        local__+="_zfun_reply_name=_zfun_reply_\$((\$#funcstack-1))";
+        # The reply's type.
+        local__+="_zfun_reply_type=$fun_type";
+    fi;
+
+    [[ $#local__ -eq 0 ]] || fun_init+="local ${(j: :)local__}";
+    [[ $#local_A -eq 0 ]] || fun_init+="local -A ${(j: :)local_A}";
+
+    if [[ $fun_type != void ]]; then
+        # Unset the reply variable. It may have been set by previous
+        # function calls.
+        fun_init+="unset \$_zfun_reply_name";
+    fi;
+
+    _zfun_fun_init[$fun_name]=${(j:; :)fun_init};
 }
 
 ################################################################################
-
-# Environment of the function.
-typeset -g -a _zfun_fun_env;
 
 function _zfun-args-show() {
     echo -E - "${#}${${(j: :)${(qqq)@}}/\"/: \"}";
 }
 
-function _zfun-args-parse() {
-    local fun_name=$funcstack[2];
-    local fun_type=${_zfun_fun_type[$fun_name]};
-
-    typeset -g -a _zfun_fun_env=();
-    local -i env=1;
-
-    # If the function has a reply value, set up a reply variable. It's
-    # not possible to write directly into a user provided variable
-    # because the function could have a local variable with the same
-    # name, which would hide the provided variable.
-    if [[ $fun_type != void ]]; then
-        # With nested function calls, multiple reply variables may be
-        # needed at the same time. In the worst case, one variable per
-        # stack frame is required.
-        local reply_frame=$(($#funcstack - 1));
-        local reply_name=_zfun_reply_$reply_frame;
-        _zfun_fun_env[env++]="local _zfun_reply_name=$reply_name;";
-        _zfun_fun_env[env++]="local _zfun_reply_type=$fun_type;";
-        # We keep track of the reply's stack frame to ensure that
-        # replies are only set from within the body of the function
-        # and not from nested function calls.
-        _zfun_fun_env[env++]="local _zfun_reply_frame=$reply_frame;";
-        # We keep track of the reply's shell to ensure that replies
-        # are only set from within the same shell. Setting replies
-        # from subshells is impossible because subshells can't modify
-        # variables of their parent shell.
-        _zfun_fun_env[env++]="local _zfun_reply_shell=\$ZSH_SUBSHELL;";
-        # Unset the reply variable to ensure that replies from
-        # previous function calls won't affect this function's reply.
-        _zfun_fun_env[env++]="unset $reply_name;";
-    fi;
-
-    local arg_names=(${=_zfun_arg_names[$fun_name]});
-    local arg_types=(${=_zfun_arg_types[$fun_name]});
-    local arg_count=$#arg_names;
-
-    [[  $# -eq $arg_count ]] ||
-        usage -1 "Expected $arg_count argument(s), got $(_zfun-args-show "$@").";
-
-    if [[ $arg_count -ge 1 ]]; then
-        local i;
-        for i in {1..$arg_count}; do
-            case $arg_types[i] in
-                scalar      ) _zfun_fun_env[env++]="local $arg_names[$i]=\$$i;";;
-                array       ) _zfun_fun_env[env++]="local -a $arg_names[$i]=(\${=$i});";;
-                association ) _zfun_fun_env[env++]="local -A $arg_names[$i]=(\${=$i});";;
-                *           ) abort "Unrecognised type: ${(qqq)arg_type[$i]}";;
-            esac;
-        done;
-    fi;
-}
-
-alias -g ':{'=':token-expansion-marker:; function $_zfun_fun_name { _zfun-args-parse "$@"; eval $_zfun_fun_env;';
+alias -g ':{'=':token-expansion-marker:; function $_zfun_fun_name { eval "$_zfun_fun_init[$0]"; ';
 alias -g ":{}"=':{ }'
 
 ################################################################################
