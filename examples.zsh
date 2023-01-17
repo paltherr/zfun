@@ -5,9 +5,9 @@
 # Functions can be declared with named arguments.
 
 fun substring string start end :{ # zero based indexes
-  [[ 0 -le $start && $start -le $#string && $start -le $end && $end -le $#string ]] ||
+  [[ 0 -le $start && $start -le $end && $end -le $#string ]] ||
     abort "Out of bound";
-  echo "${string:$start:$(( $end - $start))}";
+  echo "$string[start+1,end]";
 }
 
 echo substring1: $(substring "0123456789" 0 10);
@@ -24,9 +24,9 @@ echo;
 # string argument.
 
 fun subarray "array:a start:s end:s" :{ # zero based indexes
-  [[ 0 -le $start && $start -le $#array && $start -le $end && $end -le $#array ]] ||
+  [[ 0 -le $start && $start -le $end && $end -le $#array ]] ||
     abort "Out of bound";
-  echo "${array[$(( 1 + $start )),$end]}"
+  echo "$array[start+1,end]";
 }
 
 array=( 0 1 2 3 4 5 6 7 8 9 );
