@@ -5,9 +5,9 @@
 # Functions can be declared with named arguments.
 
 fun substring string start end :{ # zero based indexes
-    [[ 0 -le $start && $start -le $#string && $start -le $end && $end -le $#string ]] ||
-        abort "Out of bound";
-    echo "${string:$start:$(( $end - $start))}";
+  [[ 0 -le $start && $start -le $#string && $start -le $end && $end -le $#string ]] ||
+    abort "Out of bound";
+  echo "${string:$start:$(( $end - $start))}";
 }
 
 echo substring1: $(substring "0123456789" 0 10);
@@ -24,9 +24,9 @@ echo;
 # string argument.
 
 fun subarray "array:a start:s end:s" :{ # zero based indexes
-    [[ 0 -le $start && $start -le $#array && $start -le $end && $end -le $#array ]] ||
-        abort "Out of bound";
-    echo "${array[$(( 1 + $start )),$end]}"
+  [[ 0 -le $start && $start -le $#array && $start -le $end && $end -le $#array ]] ||
+    abort "Out of bound";
+  echo "${array[$(( 1 + $start )),$end]}"
 }
 
 array=( 0 1 2 3 4 5 6 7 8 9 );
@@ -40,8 +40,8 @@ echo;
 # for parameters of the corresponding type.
 
 fun zip "array1:a array2:a" :{
-    local zipped=( ${array1:^array2} );
-    echo "$zipped"; # TODO: Why doesn't it work when zipped is inlined?
+  local zipped=( ${array1:^array2} );
+  echo "$zipped"; # TODO: Why doesn't it work when zipped is inlined?
 }
 
 echo zip: $(zip "$(subarray "$array" 0 5)" "$(subarray "$array" 5 10)");
@@ -57,7 +57,7 @@ echo;
 # assign its result to a new variable.
 
 fun zip-a:a "array1:a array2:a" :{
-    r:set ${array1:^array2};
+  r:set ${array1:^array2};
 }
 
 var zipped := zip-a "$(subarray "$array" 0 5)" "$(subarray "$array" 5 10)";
@@ -85,16 +85,16 @@ echo;
 # subshells, with an error message and a stack trace.
 
 fun test-abort :{
-    fun nested1 :{
-        fun nested2 :{
-            fun nested3 :{
-                abort "Fatal failure";
-            }
-            echo $(nested3);
-        }
-        nested2 | cat;
+  fun nested1 :{
+    fun nested2 :{
+      fun nested3 :{
+        abort "Fatal failure";
+      }
+      echo $(nested3);
     }
-    nested1;
+    nested2 | cat;
+  }
+  nested1;
 }
 
 test-abort;
